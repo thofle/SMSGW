@@ -1,5 +1,7 @@
 [Cc]onfig.php
 .idea/
+.gitignore
+.gitattributes
 
 #################
 ## Eclipse
