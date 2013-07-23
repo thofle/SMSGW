@@ -20,5 +20,3 @@ elseif (isIncomingMessage())
   $sms = new SMSGW();
   $sms->incomingMessage((string)$_POST['XMLDATA']);
 }
-
-?>

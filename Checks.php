@@ -21,5 +21,3 @@ function isIncomingMessage()
 {
   return isset($_POST['XMLDATA']);
 }
-
-?>

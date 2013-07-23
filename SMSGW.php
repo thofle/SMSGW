@@ -97,6 +97,7 @@ class SMSGW
       }
     }
     fclose($socket);
+    return true;
   }
 
   function incomingMessage($xmlString)
@@ -139,6 +140,8 @@ class SMSGW
         $this->log('smsRouter: No match for command - ' . $this->getBaseCommand($command));
         break;
     }
+
+    return true;
   }
 
   /**
@@ -184,4 +187,3 @@ class SMSGW
     return $baseCommand;
   }
 }
-?>
