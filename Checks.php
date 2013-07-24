@@ -1,7 +1,6 @@
 <?php
 /**
- * User: slipperyNipple
- * Date: 23.07.13
+ * User: thofle
  * Date: 23.07.13
  * Time: 20:35
  */
