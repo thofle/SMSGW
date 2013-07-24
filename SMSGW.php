@@ -1,6 +1,6 @@
 <?php
 /**
- * User: slipperyNipple
+ * User: thofle
  * Date: 23.07.13
  * Time: 20:33
  */
@@ -12,15 +12,18 @@ class SMSGW
   private $pDB = null;
   private $number;
 
+  private $error = null;
+
   function __construct()
   {
     $this->pDB = new mysqli(_SQL_SERVER, _SQL_USERNAME, _SQL_PASSWORD, _SQL_DATABASE);
   }
 
-  function log($message)
+  function log($method, $message)
   {
+    $logMessage = $method . ': ' . $message;
     $statement = $this->pDB->prepare('INSERT INTO `log` (`message`) VALUES(?)');
-    $statement->bind_param('s', $message);
+    $statement->bind_param('s', $logMessage);
     return $statement->execute();
   }
 
@@ -70,16 +73,24 @@ class SMSGW
   function sendMessage($message)
   {
     if ($this->canSendMessage() !== true)
-      return 'Cannot send messages at this time.';
+    {
+      $this->error = 'Cannot send messages at this time.';
+      return false;
+    }
 
     if ($this->isNumberValid !== true)
-      return 'Invalid number';
+    {
+      $this->error = 'Invalid number';
+      return false;
+    }
 
 
     $socket = fsockopen(_SMS_API_SERVER,_SMS_API_PORT);
     if (!$socket)
     {
-      return 'Unable to connect to SMS API';
+      $this->log(__METHOD__, 'Unable to connect to SMS API, ' . _SMS_API_SERVER . ':' . _SMS_API_PORT);
+      $this->error = 'Unable to connect to SMS API';
+      return false;
     }
     else
     {
@@ -100,49 +111,87 @@ class SMSGW
     return true;
   }
 
+
+  /**
+   * Parses the XML from the MultiTech SF100-G SMS Gateway
+   * @param $xmlString
+   * @return bool
+   */
   function incomingMessage($xmlString)
   {
     $xml = simplexml_load_string($xmlString);
     $number = $this->convertNumber($xml->MessageNotification->SenderNumber);
     $message = $xml->MessageNotification->Message;
     $this->logMessage($number, $message, true);
-    $this->smsRouter($number, $message);
+
+    if($this->validateNumber($number))
+    {
+      list($command, $argument) = $this->parseIncomingMessage($message);
+      return $this->smsRouter($command, $argument);
+    }
+    else
+    {
+      $this->log(__METHOD__, 'Unknown/invalid number, ' . $number);
+    }
+
+    return false;
   }
 
-  function smsRouter($number, $command)
+
+  /**
+   * Splits the command from the argument and returns array($command, $argument)
+   * @param string $message
+   * @return array
+   */
+  function parseIncomingMessage($message)
   {
-    $command = strtoupper(trim($command));
-    if (strlen($command) < 3)
+    $argument = null;
+
+    if (strstr($message, ' '))
     {
-      $this->log('smsRouter: Command too short - ' . strlen($command));
-      return false;
+      $command = strstr($message, '', true);
+      $argument = trim(substr($message, strlen($command)));
+    }
+    else
+    {
+      $command = trim($message);
     }
 
-    if(!$this->validateNumber($number))
-    {
-      $this->log('smsRouter: Invalid number - ' . $number);
-      return false;
-    }
-
-    switch ($this->getBaseCommand($command))
-    {
-      case 'REBOOT':
-      case 'RESTART':
-        $net = new NetworkHandler();
-        $this->sendMessage($net->restartRouter());
-        break;
-      case 'PING':
-      case 'STATUS':
-        $net = new NetworkHandler();
-        $this->sendMessage($net->getStatusText());
-        break;
-      default:
-        $this->log('smsRouter: No match for command - ' . $this->getBaseCommand($command));
-        break;
-    }
-
-    return true;
+    return array(strtoupper($command), $argument);
   }
+
+
+  /**
+   * Routes the $command and $argument to the correct function.
+   * @param string $command
+   * @param string $argument
+   * @return bool
+   */
+  function smsRouter($command, $argument)
+  {
+    if (in_array($command, unserialize(_ENABLED_MODULES)))
+    {
+      $function = 'executeCommand'.$command;
+
+      if (function_exists($function))
+      {
+        // calls variable function
+        return $function($this, $argument);
+      }
+      else
+      {
+        $this->log(__METHOD__, 'Tried calling non-existing function ' . $function);
+      }
+    }
+    else
+    {
+      $this->log(__METHOD__, 'No match for command - ' . $command);
+    }
+
+    $this->error = 'Invalid command';
+    return false;
+  }
+
 
   /**
    * @param $message
@@ -154,6 +203,7 @@ class SMSGW
     $message = str_replace("\n", '%0D', $message);
     return $message;
   }
+
 
   /**
    * @param $parsedMessage
@@ -169,21 +219,10 @@ class SMSGW
   }
 
   /**
-   * @param $command
-   * @return mixed
+   * @return string
    */
-  public function getBaseCommand($command)
+  function getError()
   {
-    if (strpos($command, ' ') !== false)
-    {
-      // trims away everything from the first %20
-      $baseCommand = strstr($command, ' ', true);
-    }
-    else
-    {
-      $baseCommand = $command;
-    }
-
-    return $baseCommand;
+    return $this->error;
   }
 }
