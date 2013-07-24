@@ -9,6 +9,14 @@
 function executeCommandRESTART(&$SMSGW, $argument = null)
 {
   require_once('./NetworkHandler.php');
-  $net = new NetworkHandler();
-  return $SMSGW->sendMessage($net->restartRouter());
+  if ($SMSGW->isAuthCodeValid($argument))
+  {
+    $net = new NetworkHandler();
+    return $SMSGW->sendMessage($net->restartRouter());
+  }
+  else
+  {
+    $SMSGW->log(__FUNCTION__, 'Invalid auth code - ' . $argument);
+    return false;
+  }
 }

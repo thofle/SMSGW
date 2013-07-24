@@ -58,6 +58,44 @@ class SMSGW
     return false;
   }
 
+  function getAndSaveAuthCode()
+  {
+    $code = mt_rand(10000, 99999);
+
+    $timeoutInMinutes = _SEC_AUTH_CODE_TIMEOUT;
+
+    $statement = $this->pDB->prepare('CALL saveAuthCode(?, ?, ?)');
+    $statement->bind_param('sii', $this->number, $timeoutInMinutes, $code);
+
+    if ($statement->execute())
+    {
+      $statement->close();
+      return $code;
+    }
+    $statement->close();
+    return 0;
+  }
+
+  function isAuthCodeValid($code)
+  {
+    if ((int)$code < 10000 || (int)$code > 99999)
+      return false;
+
+    $statement = $this->pDB->prepare('SELECT authCodeIsValid(?, ?)');
+    $statement->bind_param('si', $this->number, $code);
+
+    if ($statement->execute())
+    {
+      $statement->bind_result($result);
+      $statement->fetch();
+      $statement->close();
+      if((int)$result == 1)
+        return true;
+    }
+
+    return false;
+  }
+
   function logMessage($number, $message, $receive = false)
   {
     $type = 'send';
@@ -149,7 +187,7 @@ class SMSGW
 
     if (strstr($message, ' '))
     {
-      $command = strstr($message, '', true);
+      $command = strstr($message, ' ', true);
       $argument = trim(substr($message, strlen($command)));
     }
     else

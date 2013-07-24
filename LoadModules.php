@@ -8,3 +8,4 @@
 // TODO: Load modules dynamically
 require_once('./modules/mod_RESTART.php');
 require_once('./modules/mod_STATUS.php');
+require_once('./modules/mod_AUTH.php');
