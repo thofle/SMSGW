@@ -1,8 +1,8 @@
 <?php
-require('./Config.php');
-require('./NetworkHandler.php');
-require('./SMSGW.php');
-require('./Checks.php');
+require_once('./Config.php');
+require_once('./LoadModules.php');
+require_once('./SMSGW.php');
+require_once('./Checks.php');
 
 
 if (isOutgoingMessage())
@@ -11,12 +11,18 @@ if (isOutgoingMessage())
   
   if ($sms->validateNumber($_GET['recipient']))
   {
-    $sms->sendMessage($_GET['message']);
+    if(!$sms->sendMessage($_GET['message']) && _DEBUG_ENABLED)
+    {
+      echo $sms->getError();
+    }
   }
 
 }
 elseif (isIncomingMessage())
 {
   $sms = new SMSGW();
-  $sms->incomingMessage((string)$_POST['XMLDATA']);
+  if (!$sms->incomingMessage((string)$_POST['XMLDATA']) && _DEBUG_ENABLED)
+  {
+    echo $sms->getError();
+  }
 }
