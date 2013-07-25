@@ -2,6 +2,7 @@
 .idea/
 .gitignore
 .gitattributes
+[Ss]cheduler.php
 
 #################
 ## Eclipse
