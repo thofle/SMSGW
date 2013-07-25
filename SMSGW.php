@@ -9,7 +9,7 @@
 class SMSGW
 {
   private $isNumberValid = false;
-  private $pDB = null;
+  public $pDB = null;
   private $number;
 
   private $error = null;
@@ -42,7 +42,7 @@ class SMSGW
     $number = $this->convertNumber($number);
 
     // TODO: Less static, more dynamic!
-    $this->isNumberValid = ($number == _SMS_STATIC_NUMBER ? true : false);
+    $this->isNumberValid = (in_array($number, unserialize(_SMS_STATIC_NUMBERS)) ? true : false);
     $this->number = $number;
     return $this->isNumberValid;
   }
@@ -112,6 +112,7 @@ class SMSGW
   {
     if ($this->canSendMessage() !== true)
     {
+      $this->log(__METHOD__, 'canSendMessage returned false');
       $this->error = 'Cannot send messages at this time.';
       return false;
     }
