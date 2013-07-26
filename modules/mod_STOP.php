@@ -8,7 +8,7 @@
 
 function executeCommandSTOP(&$SMSGW, $argument = null)
 {
-  list($mainArgument, $secondaryArgumens) = $SMSGW->parseIncomingMessage($argument);
+  list($mainArgument, $secondaryArguments) = $SMSGW->parseIncomingMessage($argument);
 
   if($mainArgument != null)
   {
