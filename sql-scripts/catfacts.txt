@@ -1,0 +1,29 @@
+-- Table
+----------------
+
+CREATE TABLE `ext_catfacts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `catFact` varchar(140) COLLATE utf8_swedish_ci NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci;
+
+INSERT INTO `ext_catfacts` VALUES (1,'Cats have on average 3.8 legs.'),(2,'The cat has 500 skeletal muscles (humans have 650).'),(3,'Recent studies have shown that cats can see blue and green. There is disagreement as to whether they can see red.'),(4,'Almost 10% of a cat\'s bones are in its tail, and the tail is used to maintain balance.'),(5,'A domestic cat can sprint at about 31 miles per hour.'),(6,'A cat\'s normal pulse is 140-240 beats per minute, with an average of 195.'),(7,'If your cat is near you, and her tail is quivering, this is the greatest expression of love your cat can give you.'),(8,'The majority of cats do not have any eyelashes.'),(9,'Cats rarely meow at other cats.'),(10,'The Pilgrims were the first to introduce cats to North America.'),(11,'You should never challenge a cat to an arm-wrestling contest, the cat will win and you will be humiliated.'),(12,'Otters are just really wet cats.'),(13,'Cats purr at 26 cycles per second, the same as an idling diesel engine.'),(14,'CAT scans are not actually performed by cats.'),(15,'Cats lived with soldiers in trenches, where they killed mice during World War I.'),(16,'A cat can jump 5 times as high as it is tall.'),(17,'An adult cat has 30 teeth, 16 on the top and 14 on the bottom.'),(18,'Tabby cats are thought to get their name from Attab, a district in Baghdad, now the capital of Iraq.'),(19,'Cats step with both left legs, then both right legs when they walk or run.'),(20,'Cheetahs do not roar, as the other big cats do. Instead, they purr.'),(21,'In 1987 cats overtook dogs as the number one pet in America. All hail the cat overlords.'),(22,'Cats are only found in two places on Earth. The northern and southern hemishperes.'),(23,'A domestic cat kills about 25 mice every year. The number of cats killed by mice is a lot lower.'),(24,'Cats respond most readily to names that end in an ee sound.'),(25,'Domestic cats purr both when inhaling and when exhaling.'),(26,'The average litter of kittens is between 2-6 kittens.'),(27,'A happy cat holds its tail high and steady.'),(28,'Cats can be prone to fleas in the summertime, 794 fleas were counted on one cat by a Cats Protection volunteer in the summer of 1992.'),(29,'The first formal cat show was held in England in 1871; in America, in 1895.'),(30,'Cats take between 20-40 breaths per minute.'),(31,'Cats do not think that they are little people. They think that we are big cats. This influences their behavior in many ways.'),(32,'The ancestor of all domestic cats is the African Wild Cat which still exists today.'),(33,'Cats respond better to women than to men, probably due to the fact that women\'s voices have a higher pitch.'),(34,'Today there are about 100 distinct breeds of the domestic cat.'),(35,'Cats have been domesticated for half as long as dogs have been.'),(36,'Cats eat grass to aid their digestion and to help them get rid of any fur in their stomachs.'),(37,'On average, a cat will sleep for 16 hours a day.');
+
+
+-- Stored proc
+----------------
+
+delimiter $$
+
+CREATE DEFINER=`smsgw`@`%` FUNCTION `getRandomCatFact`() RETURNS varchar(140) CHARSET utf8 COLLATE utf8_swedish_ci
+BEGIN
+	RETURN (SELECT catFact
+			FROM ext_catfacts AS c1 JOIN
+				   (SELECT (RAND() *
+								 (SELECT MAX(id)
+									FROM ext_catfacts)) AS id)
+					AS c2
+			 WHERE c1.id >= c2.id
+			 ORDER BY c1.id ASC
+			 LIMIT 1);
+END$$
